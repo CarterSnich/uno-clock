@@ -39,16 +39,16 @@ bool isRinging = false;
 const char* HELP_TEXT = R"rawliteral(
 Available commands:
 
-set date YYYY MM DD HH MM SS
-  - Set the current date.
-  - Example: set date 2000 12 31 12 59 36
+set datetime YYYY MM DD HH MM SS
+  - Set the current datetime.
+  - Example: set datetime 2000 12 31 12 59 36
 
 set alarm HH MM
   - Set alarm time (24-hour format).
   - Example: set alarm 13 30
 
-get date
-  - Show current date.
+get datetime
+  - Show current datetime.
 
 get alarm
   - Show current alarm time.
@@ -133,6 +133,7 @@ void loop() {
       }
 
       if (ticksDiff(millis(), lastBuzzMs) >= 1000) {
+        lastBuzzMs = millis();
         if (digitalRead(BUZZER)== HIGH) {
           digitalWrite(BUZZER, LOW);
           lcd.noDisplay();
@@ -180,7 +181,7 @@ void serial() {
   
     if (args[0] == "set") {
       // set date
-      if (args[1] == "date") {
+      if (args[1] == "datetime") {
         if (args[2] == "" || args[3] == "" || args[4] == "" || args[5] == "" || args[6] == "" || args[7] == "") {
           // missing date values
           Serial.println("Missing values.");
@@ -202,7 +203,7 @@ void serial() {
             const char dtStr[20];
             sprintf(dtStr, "%04d %02d %02d %02d:%02d:%02d", YYYY, MM, DD, HH, mm, SS);
             Serial.print(dtStr);
-            Serial.println(" : Invalid date values.");
+            Serial.println(" : Invalid datetime values.");
           }
         }
       } else if (args[1] == "alarm") {
@@ -214,10 +215,10 @@ void serial() {
           Serial.println("Alarm set.");
         }
       } else {
-        Serial.println("Missing options: date, alarm.");
+        Serial.println("Missing options: datetime, alarm.");
       }
     } else if (args[0] == "get") {
-      if (args[1] == "date") {
+      if (args[1] == "datetime") {
         RtcDateTime dt = Rtc.GetDateTime();
         const char dtStr[20];
         sprintf(
