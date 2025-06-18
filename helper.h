@@ -19,6 +19,10 @@ set datetime YYYY MM DD HH MM SS
   - Set the current datetime.
   - Example: set datetime 2000 12 31 12 59 36
 
+set alarm on|off
+  - Enable/disable alarm.
+  - Example: set alarm on
+
 set alarm HH MM
   - Set alarm time (24-hour format).
   - Example: set alarm 13 30

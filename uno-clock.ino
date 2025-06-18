@@ -22,7 +22,7 @@ const int BUZZER = 13;
 // Alarm time
 int alarmHour = 12;
 int alarmMinute = 0;
-boolean isAlarmOn = true;
+boolean isAlarmOn = false;
 bool isRinging = false;
 
 unsigned long lastTouchMs = millis();
@@ -69,10 +69,10 @@ void setup() {
 }
 
 void loop() {
-  serial();
-
   datetime = Rtc.GetDateTime();
   
+  serial();
+
   if (datetime.IsValid()) {
     isBatteryLow = false;
   } else {
@@ -90,11 +90,15 @@ void loop() {
   if (isAlarmOn) {
     lcd.setCursor(2, 1);
     lcd.write(byte(2));
+  } else {  
+    lcdPrint(" ", 2, 1);
   }
 
   if (isBatteryLow) {
     lcd.setCursor(3, 1);
     lcd.write(byte(3));
+  } else {
+    lcdPrint(" ", 3, 1);
   }
   
   if (isAlarmOn && datetime.Hour() == alarmHour && datetime.Minute() == alarmMinute && datetime.Second() == 0) {
@@ -114,6 +118,7 @@ void loop() {
         isRinging = false;
         digitalWrite(BUZZER, LOW);
         lcd.display();
+        lcd.clear();
         break;
       }
 
@@ -192,7 +197,13 @@ void serial() {
           }
         }
       } else if (args[1] == "alarm") {
-        if (args[2] == "" || args[3] == "") {
+        if (args[2] == "on") {
+          isAlarmOn = true;
+          Serial.println("Alarm enabled.");
+        } else if (args[2] == "off") {
+          isAlarmOn = false;
+          Serial.println("Alarm disabled.");
+        } else if (args[2] == "" || args[3] == "") {
           Serial.println("Missing values.");
         } else {
           alarmHour = String(args[2]).toInt();
@@ -243,7 +254,7 @@ void displayClock(RtcDateTime &dt) {
   );
 
   lcdPrint(mDate, 0, 0);
-  lcdPrint(mTime, 4+4, 1);
+  lcdPrint(mTime, 8, 1);
 }
 
 void lcdPrint(const char* str, int x, int y) {
