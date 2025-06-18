@@ -1,17 +1,8 @@
 #include <LiquidCrystal_I2C.h>
 #include <ThreeWire.h>
 #include <RtcDS1302.h>
+#include "helper.h"
 
-const char* DAYS[7] = {
-  "Sun", "Mon", "Tue",
-  "Wed", "Thu", "Fri", "Sat"
-};
-
-const char* MONTHS[13] = {
-  "xxx", "Jan", "Feb", "Mar", "Apr",
-  "May", "Jun", "Jul", "Aug",
-  "Sep", "Oct", "Nov", "Dec"
-};
 
 // connect to SCL and SDA
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -28,35 +19,11 @@ char mTime[9];
 const int TOUCH = 12;
 const int BUZZER = 13;
 
-
 // Alarm time
 int alarmHour = 12;
 int alarmMinute = 0;
+boolean isAlarmOn = true;
 bool isRinging = false;
-
-// Serial max tokens
-#define MAX_TOKENS 8
-const char* HELP_TEXT = R"rawliteral(
-Available commands:
-
-set datetime YYYY MM DD HH MM SS
-  - Set the current datetime.
-  - Example: set datetime 2000 12 31 12 59 36
-
-set alarm HH MM
-  - Set alarm time (24-hour format).
-  - Example: set alarm 13 30
-
-get datetime
-  - Show current datetime.
-
-get alarm
-  - Show current alarm time.
-
-help
-  - Show this help message.
-)rawliteral";
-
 
 unsigned long lastTouchMs = millis();
 
@@ -65,6 +32,10 @@ void setup() {
   
   lcd.init();
   lcd.backlight();
+  lcd.createChar(0, ALIEN_1);
+  lcd.createChar(1, ALIEN_2);
+  lcd.createChar(2, ALARM_ICON);
+  lcd.createChar(3, BATTERY_ICON);
 
   Rtc.Begin();
   compiledDateTime = RtcDateTime(__DATE__, __TIME__) + compileTimeOffset;
@@ -112,11 +83,25 @@ void loop() {
   
   displayClock(datetime);
 
-  if (datetime.Hour() == alarmHour && datetime.Minute() == alarmMinute && datetime.Second() == 0) {
+  lcd.setCursor(0, 1);
+  lcd.write(byte(0));
+  lcd.write(byte(1));
+
+  if (isAlarmOn) {
+    lcd.setCursor(2, 1);
+    lcd.write(byte(2));
+  }
+
+  if (isBatteryLow) {
+    lcd.setCursor(3, 1);
+    lcd.write(byte(3));
+  }
+  
+  if (isAlarmOn && datetime.Hour() == alarmHour && datetime.Minute() == alarmMinute && datetime.Second() == 0) {
     isRinging = true;
   }
   
-  if (isRinging) {
+  if (isAlarmOn && isRinging) {
     const char alarmStr[17];
     sprintf(alarmStr, "     %02d:%02d      ", alarmHour, alarmMinute);
     lcdPrint("     Alarm      ", 0, 0);
@@ -258,7 +243,7 @@ void displayClock(RtcDateTime &dt) {
   );
 
   lcdPrint(mDate, 0, 0);
-  lcdPrint(mTime, 4, 1);
+  lcdPrint(mTime, 4+4, 1);
 }
 
 void lcdPrint(const char* str, int x, int y) {
